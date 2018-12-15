@@ -3,6 +3,12 @@ from django.http import JsonResponse
 import json
 from api.models import Article
 from tokenizer import TokenVerifier
+from rest_framework import serializers
+
+class ArticleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Article
+        fields = ('id', 'title', 'text', 'user', 'creation_date')
 
 def verify_token(token):
     tv = TokenVerifier(token)
@@ -12,26 +18,25 @@ def verify_token(token):
 def articles(request):
     try:
         token = request.META.get('HTTP_AUTHORIZATION').split()[1]
-        if not verify_token(token):
-            return get_400()
+        claims = verify_token(token)
+        if not claims:
+            return get_400('token required')
     except Exception as e:
-        raise e
-        print('no ttoekn, disallowed')
-        return get_401()
+        return get_401('no ttoekn, disallowed')
     arts = []
-    for a in Article.objects.all().order_by('-creation_date'):
-        arts.append({'id':a.id,'title':a.title,'text':a.text})
+    for a in Article.objects.filter(user = claims['username']).order_by('-creation_date'):
+        arts.append(ArticleSerializer(a).data)
     return JsonResponse(status = 200, data = arts, safe = False)
 
 @csrf_exempt
 def article(request, pk = None):
     try:
         token = request.META.get('HTTP_AUTHORIZATION').split()[1]
-        if not verify_token(token):
-            return get_400()
+        claims = verify_token(token)
+        if not claims:
+            return get_400('token required')
     except:
-        print('no ttoekn, disallowed')
-        return get_401()
+        return get_401('no ttoekn, disallowed')
     m = request.method
     if m == 'POST':
         try:
@@ -39,8 +44,9 @@ def article(request, pk = None):
             a = Article()
             a.title = d['title']
             a.text = d['text']
+            a.user = claims['username']
             a.save()
-            return JsonResponse(status = 200, data = {'status': 'ok', 'id': a.id})
+            return JsonResponse(status = 200, data = ArticleSerializer(a).data)
         except:
             return get_400()
     if m == 'PUT':
@@ -54,16 +60,18 @@ def article(request, pk = None):
                 s = 'upserted'
             a.title = d['title']
             a.text = d['text']
+            a.user = claims['username']
             a.save()
-            return JsonResponse(status = 200, data = {'id': a.id, 'title':a.title,'text':a.text})
+            return JsonResponse(status = 200, data = ArticleSerializer(a).data)
         except:
             raise
             return get_400()
     if m == 'GET':
         try:
             a = Article.objects.get(id = pk)
-            return JsonResponse(status = 200, data = {'id': a.id, 'title':a.title,'text':a.text})
+            return JsonResponse(status = 200, data = ArticleSerializer(a).data)
         except:
+            raise
             return get_404()
     if m == 'DELETE':
         try:
