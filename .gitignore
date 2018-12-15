@@ -1,0 +1,19 @@
+#Python
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*wsgi.py*
+db.sqlite3
+blog/settings.py
+keys/
+uwsgi*
+manage.py
+venv
+
+*/migrations
+
+*.swp
+
+
+static/
+db.sqlite3_bak
