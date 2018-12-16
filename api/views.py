@@ -53,9 +53,9 @@ def article(request, pk = None):
         try:
             d = _json(request.body.decode('utf-8'), ['title','text'])
             try:
-                a = Article.objects.get(id = pk)
+                a = Article.objects.filter(user = claims['username']).filter(id = pk)[0]
                 s = 'updated'
-            except Article.DoesNotExist:
+            except:
                 a = Article()
                 s = 'upserted'
             a.title = d['title']
@@ -64,18 +64,16 @@ def article(request, pk = None):
             a.save()
             return JsonResponse(status = 200, data = ArticleSerializer(a).data)
         except:
-            raise
             return get_400()
     if m == 'GET':
         try:
-            a = Article.objects.get(id = pk)
+            a = Article.objects.filter(user = claims['username']).filter(id = pk)[0]
             return JsonResponse(status = 200, data = ArticleSerializer(a).data)
         except:
-            raise
             return get_404()
     if m == 'DELETE':
         try:
-            a = Article.objects.get(id = pk)
+            a = Article.objects.filter(user = claims['username']).filter(id = pk)[0]
             a.delete()
             return JsonResponse(status = 200, data = {'status': 'ok'})
         except:
