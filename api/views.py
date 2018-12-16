@@ -20,9 +20,9 @@ def articles(request):
         token = request.META.get('HTTP_AUTHORIZATION').split()[1]
         claims = verify_token(token)
         if not claims:
-            return get_400('token required')
+            return get_400('no claims')
     except Exception as e:
-        return get_401('no ttoekn, disallowed')
+        return get_401('no/bad token')
     arts = []
     for a in Article.objects.filter(user = claims['username']).order_by('-creation_date'):
         arts.append(ArticleSerializer(a).data)
@@ -34,9 +34,9 @@ def article(request, pk = None):
         token = request.META.get('HTTP_AUTHORIZATION').split()[1]
         claims = verify_token(token)
         if not claims:
-            return get_400('token required')
+            return get_400('no claims')
     except:
-        return get_401('no ttoekn, disallowed')
+        return get_401('no/bad token')
     m = request.method
     if m == 'POST':
         try:
