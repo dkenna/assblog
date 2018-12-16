@@ -14,6 +14,12 @@ def verify_token(token):
     tv = TokenVerifier(token)
     return tv.verify()
 
+def get_articles(username):
+    return Article.objects.filter(user = username).order_by('-creation_date')
+
+def get_article(username, pk):
+    return get_articles(username).filter(id = pk)[0]
+
 @csrf_exempt
 def articles(request):
     try:
@@ -24,7 +30,7 @@ def articles(request):
     except Exception as e:
         return get_401('no/bad token')
     arts = []
-    for a in Article.objects.filter(user = claims['username']).order_by('-creation_date'):
+    for a in get_articles(claims['username']):
         arts.append(ArticleSerializer(a).data)
     return JsonResponse(status = 200, data = arts, safe = False)
 
@@ -53,7 +59,7 @@ def article(request, pk = None):
         try:
             d = _json(request.body.decode('utf-8'), ['title','text'])
             try:
-                a = Article.objects.filter(user = claims['username']).filter(id = pk)[0]
+                a = get_article(claims['username'], pk)
                 s = 'updated'
             except:
                 a = Article()
@@ -67,13 +73,13 @@ def article(request, pk = None):
             return get_400()
     if m == 'GET':
         try:
-            a = Article.objects.filter(user = claims['username']).filter(id = pk)[0]
+            a = get_article(claims['username'], pk)
             return JsonResponse(status = 200, data = ArticleSerializer(a).data)
         except:
             return get_404()
     if m == 'DELETE':
         try:
-            a = Article.objects.filter(user = claims['username']).filter(id = pk)[0]
+            a = get_article(claims['username'], pk)
             a.delete()
             return JsonResponse(status = 200, data = {'status': 'ok'})
         except:
