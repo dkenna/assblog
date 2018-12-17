@@ -1,38 +1,39 @@
 import * as log from 'loglevel'
 import axios from 'axios'
 
-const blogAPI = 'http://{blog}.com:8001/art'
+const blogAPI = 'http://dkenna.com:8001/art'
 
 log.setLevel('debug')
 
 class BlogClient {
     constructor () {
-      this.user = null
       this.arts = []
       this._article = null
-      this.token = null
     }
-    setUser () {}
-    setToken (token) {
-        this.token = token
+    headers (token) {
+        if (token !== null) {
+            return {'Authorization': `Bearer ${token}`}
+        } else {
+            return {}
+        }
     }
-    articles () {
+    articles (token = null) {
         return axios.get(blogAPI + 's', {withCredentials: true,
-                headers: {'Authorization': `Bearer ${this.token}`}})
+                headers: this.headers(token)})
     }
-    article (id) {
+    article (id, token) {
         this._article = axios.get(blogAPI + '/' + id,
-            {headers: {'Authorization': `Bearer ${this.token}`}})
+            {headers: this.headers(token)})
         return this._article
     }
-    delArticle (id) {
+    delArticle (id, token) {
         const resp = axios.delete(blogAPI + '/' + id,
-            {headers: {'Authorization': `Bearer ${this.token}`}})
+            {headers: this.headers(token)})
         return resp
     }
-    saveArticle (id, data) {
+    saveArticle (id, data, token) {
         this._article = axios.put(blogAPI + '/' + id, data,
-            {headers: {'Authorization': `Bearer ${this.token}`}})
+            {headers: this.headers(token)})
         return this._article
     }
 }
