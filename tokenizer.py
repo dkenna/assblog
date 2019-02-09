@@ -5,7 +5,7 @@ from datetime import datetime
 import requests
 import json
 
-jwks_endpoint = 'http://dkenna.com:8000/get_jwks'
+jwks_endpoint = 'https://dkenna.com:8000/get_jwks'
 
 class TokenVerifier:
     """

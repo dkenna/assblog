@@ -26,9 +26,9 @@ def articles(request):
         token = request.META.get('HTTP_AUTHORIZATION').split()[1]
         claims = verify_token(token)
         if not claims:
-            return get_400('no claims')
+            return get_400(request, 'no claims')
     except Exception as e:
-        return get_401('no/bad token')
+        return get_401(request, 'no/bad token')
     arts = []
     for a in get_articles(claims['username']):
         arts.append(ArticleSerializer(a).data)
@@ -40,9 +40,9 @@ def article(request, pk = None):
         token = request.META.get('HTTP_AUTHORIZATION').split()[1]
         claims = verify_token(token)
         if not claims:
-            return get_400('no claims')
+            return get_400(request, 'no claims')
     except:
-        return get_401('no/bad token')
+        return get_401(request, 'no/bad token')
     m = request.method
     if m == 'POST':
         try:
@@ -54,7 +54,7 @@ def article(request, pk = None):
             a.save()
             return JsonResponse(status = 200, data = ArticleSerializer(a).data)
         except:
-            return get_400()
+            return get_400(request)
     if m == 'PUT':
         try:
             d = _json(request.body.decode('utf-8'), ['title','text'])
@@ -70,20 +70,20 @@ def article(request, pk = None):
             a.save()
             return JsonResponse(status = 200, data = ArticleSerializer(a).data)
         except:
-            return get_400()
+            return get_400(request)
     if m == 'GET':
         try:
             a = get_article(claims['username'], pk)
             return JsonResponse(status = 200, data = ArticleSerializer(a).data)
         except:
-            return get_404()
+            return get_404(request)
     if m == 'DELETE':
         try:
             a = get_article(claims['username'], pk)
             a.delete()
             return JsonResponse(status = 200, data = {'status': 'ok'})
         except:
-            return get_400()
+            return get_400(request)
         return JsonResponse(status = 204, data = {})
     
 def _json(body,keys):
@@ -97,23 +97,23 @@ def _json(body,keys):
         print("parsing json failed.")
         raise e
     
-        
-def get_json_http_error(status,msg):
+
+def get_json_http_error(request, status,msg):
     return JsonResponse(status=status, data={
         'status': 'error',
         'error': msg
     })
 
 @csrf_exempt
-def get_404():
-    return get_json_http_error(404,"not fund")
+def get_404(request, msg="not fund"):
+    return get_json_http_error(request, 404, msg)
 @csrf_exempt
-def get_400():
-    return get_json_http_error(400, "bad requesssst")
+def get_400(request, msg="bad requesssst"):
+    return get_json_http_error(request, 400, msg)
 
 @csrf_exempt
-def get_405():
-    return get_json_http_error(400, "bad meth")
+def get_405(request, msg="bad meth"):
+    return get_json_http_error(request, 405, msg)
 @csrf_exempt
-def get_401(msg="forsbidden"):
-    return get_json_http_error(401, msg)
+def get_401(request, msg="forsbidden"):
+    return get_json_http_error(request, 401, msg)
